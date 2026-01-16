@@ -4,6 +4,10 @@ using System.Text.Json;
 
 namespace OrderApi.Publisher.Messaging;
 
+/// <summary>
+/// RabbitMQ publisher used by the API to emit domain events.
+/// Declares a durable topology (exchange/queues) and publishes persistent JSON messages.
+/// </summary>
 public sealed class RabbitMqPublisher : IDisposable
 {
     private readonly IConnection _connection;
@@ -11,6 +15,7 @@ public sealed class RabbitMqPublisher : IDisposable
 
     public RabbitMqPublisher()
     {
+        // RabbitMQ connection settings (local Docker container)
         var factory = new ConnectionFactory
         {
             HostName = "localhost",
@@ -22,11 +27,11 @@ public sealed class RabbitMqPublisher : IDisposable
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
 
-        // Exchanges
+        // Main exchange for publishing order events
         _channel.ExchangeDeclare("orders.exchange", ExchangeType.Direct, durable: true);
         _channel.ExchangeDeclare("orders.dlx", ExchangeType.Direct, durable: true);
 
-        // DLQ
+        // Dead-letter queue(DLQ)
         _channel.QueueDeclare("orders.dlq", durable: true, exclusive: false, autoDelete: false);
         _channel.QueueBind("orders.dlq", "orders.dlx", routingKey: "orders.dead");
 
@@ -49,15 +54,21 @@ public sealed class RabbitMqPublisher : IDisposable
         _channel.QueueBind("orders.created.q", "orders.exchange", routingKey: "orders.created");
     }
 
+    /// <summary>
+    /// Publishes a message to the main exchange with the provided routing key.
+    /// Messages are sent as JSON with persistent delivery mode.
+    /// </summary>
     public void Publish<T>(string routingKey, T message)
     {
         var json = JsonSerializer.Serialize(message);
         var body = Encoding.UTF8.GetBytes(json);
 
+        // Persistent message so it can survive broker restart (requires durable queues/exchanges)
         var props = _channel.CreateBasicProperties();
         props.Persistent = true;
         props.ContentType = "application/json";
 
+        // Publish to the direct exchange. Routing key determines which queue(s) receive it.
         _channel.BasicPublish(
             exchange: "orders.exchange",
             routingKey: routingKey,
