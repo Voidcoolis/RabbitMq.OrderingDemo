@@ -1,0 +1,21 @@
+# Info
+
+## Project Name
+RabbitMQ Order Processing System
+
+##Project Description
+Designed and implemented an event-driven order processing system using RabbitMQ and ASP.NET Core. The solution consists of a publisher API that emits order creation events and a background consumer service that processes those events asynchronously. The system ensures reliable message delivery using manual acknowledgements, retry queues with delay, and dead-letter queues for failure handling. The messaging flow was tested end-to-end using Swagger and RabbitMQ Management UI.
+
+## Project Domain
+Backend Systems / Event-Driven Architecture / Messaging
+
+## My Responsibilities
+- Designed RabbitMQ messaging topology (direct exchange, durable queues, retry queue with TTL, dead-letter queue)
+- Implemented an ASP.NET Core Web API for publishing domain events to RabbitMQ
+- Implemented a .NET Worker Service consumer for background message processing
+- Added manual message acknowledgements, QoS/prefetch configuration, and retry logic
+- Handled JSON serialization/deserialization and schema validation
+- Tested and validated message flow using RabbitMQ Management UI and Swagger
+
+## Technology Stack
+C#, .NET 8, ASP.NET Core Web API, .NET Worker Service, RabbitMQ, Docker, System.Text.Json, Swagger, Microsoft.Extensions.Logging
